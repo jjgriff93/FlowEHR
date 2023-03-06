@@ -62,9 +62,6 @@ RUN export ARCH="$(dpkg --print-architecture)"; \
     wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${SC_VERSION}/shellcheck-${SC_VERSION}.linux.${ARCH}.tar.xz" | tar -xJv \
     && cp "shellcheck-${SC_VERSION}/shellcheck" /usr/local/bin/
 
-ARG PAJV_VERSION="1.2.0"
-RUN npm install -g pajv@${PAJV_VERSION}
-
 ARG PRECOMMIT_VERSION="2.21.0"
 RUN python3 -m pip install pre-commit=="${PRECOMMIT_VERSION}" --no-cache-dir
 
@@ -97,9 +94,9 @@ RUN python3 -m pip install --no-cache-dir \
 
 # Get the local Spark installed to be able to run unit tests
 # Borrowed from https://github.com/beandrad/pyspark-sample/blob/main/.devcontainer/Dockerfile#L36
-COPY config.transform.yaml /tmp/config.transform.yaml
+COPY config.yaml /tmp/config.yaml
 RUN mkdir -p /tmp/docker-downloads \
-   && SPARK_VERSION=$(yq e .spark_version /tmp/config.transform.yaml) \
+   && SPARK_VERSION=$(yq e .transform.spark_version /tmp/config.yaml) \
    && python3 -m pip install --no-cache-dir pyspark=="${SPARK_VERSION}" \
    && apt-get update \
    && apt-get -y install openjdk-11-jdk wget --no-install-recommends \

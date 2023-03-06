@@ -12,12 +12,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-include "root" {
-  path = find_in_parent_folders()
-}
-
 locals {
   providers = read_terragrunt_config("${get_repo_root()}/providers.hcl")
+}
+
+terraform {
+  extra_arguments "auto_approve" {
+    commands  = ["apply"]
+    arguments = ["-auto-approve"]
+  }
 }
 
 generate "terraform" {
@@ -28,10 +31,16 @@ terraform {
   required_version = "${local.providers.locals.terraform_version}"
 
   required_providers {
-    ${local.providers.locals.required_provider_azuread}
+    ${local.providers.locals.required_provider_azure}
   }
 }
 EOF
+}
+
+generate "provider" {
+  path      = "provider.tf"
+  if_exists = "overwrite_terragrunt"
+  contents  = local.providers.locals.azure_provider
 }
 
 remote_state {
@@ -42,3 +51,8 @@ remote_state {
     if_exists = "overwrite_terragrunt"
   }
 }
+
+inputs = merge(
+  yamldecode(file(find_in_parent_folders("config.yaml"))), {
+  tf_in_automation = get_env("TF_IN_AUTOMATION", false)
+})

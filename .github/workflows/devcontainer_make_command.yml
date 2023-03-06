@@ -34,25 +34,16 @@ on:
         required: false
         description: Commit SHA to override the default GitHub checkout
     secrets:
-      ARM_SUBSCRIPTION_ID:
-        required: true
-      ARM_TENANT_ID:
-        required: true
       ARM_CLIENT_ID:
         required: true
       ARM_CLIENT_SECRET:
         required: true
-      DEVCONTAINER_ACR_NAME:
+      ARM_TENANT_ID:
         required: true
-      SUFFIX:
+      ARM_SUBSCRIPTION_ID:
         required: true
-      LOCATION:
+      GITHUB_TOKEN:
         required: true
-      ORG_GH_TOKEN:
-        required: true
-      DATA_SOURCE_CONNECTIONS:
-        required: false
-        # default: "[]"
 
 jobs:
   make_core:
@@ -80,7 +71,7 @@ jobs:
 
           if echo ${{ inputs.command }} | grep -q "test" ; then
               build_agent_command="${{ inputs.command }}-without-core-destroy"
-              post_build_agent_command="destroy-all"
+              post_build_agent_command="destroy"
           elif echo ${{ inputs.command }} | grep -q "destroy" ; then
               build_agent_command="destroy-non-core"
               post_build_agent_command="${{ inputs.command }}"
@@ -116,7 +107,7 @@ jobs:
       - name: Bootstrap
         uses: devcontainers/ci@v0.2
         env:
-          ORG_GH_TOKEN: "${{ secrets.ORG_GH_TOKEN }}"
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         with:
           imageName: ${{ steps.dc.outputs.image_path }}
           cacheFrom: ${{ steps.dc.outputs.image_path }}
@@ -131,11 +122,9 @@ jobs:
             ARM_CLIENT_SECRET=${{ secrets.ARM_CLIENT_SECRET }}
             ARM_TENANT_ID=${{ secrets.ARM_TENANT_ID }}
             ARM_SUBSCRIPTION_ID=${{ secrets.ARM_SUBSCRIPTION_ID }}
-            ORG_GH_TOKEN=${{ secrets.ORG_GH_TOKEN }}
-            SUFFIX=${{ (inputs.suffix_override != '' && inputs.suffix_override) || secrets.SUFFIX }}
-            LOCATION=${{ secrets.LOCATION }}
-            ENVIRONMENT=${{ inputs.environment }}
-            DEVCONTAINER_ACR_NAME=${{ secrets.DEVCONTAINER_ACR_NAME }}
+            GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+            TF_VAR_SUFFIX=${{ (inputs.suffix_override != '' && inputs.suffix_override) }}
+            TF_VAR_MGMT_ACR_NAME=${{ secrets.DEVCONTAINER_ACR_NAME }}
 
       - name: ACR Login
         if: steps.acr_login.outcome == 'failure'
@@ -149,7 +138,7 @@ jobs:
       - name: Deploy core and build agent
         uses: devcontainers/ci@v0.2
         env:
-          ORG_GH_TOKEN: "${{ secrets.ORG_GH_TOKEN }}"
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         with:
           imageName: ${{ steps.dc.outputs.image_path }}
           imageTag: ${{ steps.dc.outputs.tag }}
@@ -163,18 +152,14 @@ jobs:
             ARM_CLIENT_SECRET=${{ secrets.ARM_CLIENT_SECRET }}
             ARM_TENANT_ID=${{ secrets.ARM_TENANT_ID }}
             ARM_SUBSCRIPTION_ID=${{ secrets.ARM_SUBSCRIPTION_ID }}
-            SUFFIX=${{ (inputs.suffix_override != '' && inputs.suffix_override) || secrets.SUFFIX }}
-            LOCATION=${{ secrets.LOCATION }}
-            ENVIRONMENT=${{ inputs.environment }}
-            DEVCONTAINER_ACR_NAME=${{ secrets.DEVCONTAINER_ACR_NAME }}
-            DEVCONTAINER_IMAGE_NAME=flowehr/devcontainer
-            DEVCONTAINER_TAG=${{ steps.dc.outputs.tag }}
-            ORG_GH_TOKEN=${{ secrets.ORG_GH_TOKEN }}
-            DATA_SOURCE_CONNECTIONS=${{ (secrets.DATA_SOURCE_CONNECTIONS != '' && secrets.DATA_SOURCE_CONNECTIONS) || '[]' }}
-            USE_RANDOM_ADDRESS_SPACE=${{ (inputs.suffix_override != '' && '1') || '0' }}
-            GITHUB_RUNNER_NAME=${{ steps.dc.outputs.runner_name }}
-            GITHUB_RUNNER_TOKEN=${{ secrets.GH_RUNNER_CREATE_TOKEN }}
-            GITHUB_REPOSITORY=${{ github.repository }}
+            GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+            TF_VAR_SUFFIX=${{ (inputs.suffix_override != '' && inputs.suffix_override) }}
+            TF_VAR_MGMT_ACR_NAME=${{ secrets.DEVCONTAINER_ACR_NAME }}
+            TF_VAR_DEVCONTAINER_IMAGE_NAME=flowehr/devcontainer
+            TF_VAR_DEVCONTAINER_TAG=${{ steps.dc.outputs.tag }}
+            TF_VAR_USE_RANDOM_ADDRESS_SPACE=${{ (inputs.suffix_override != '' && '1') || '0' }}
+            TF_VAR_GITHUB_RUNNER_NAME=${{ steps.dc.outputs.runner_name }}
+            TF_VAR_GITHUB_REPOSITORY=${{ github.repository }}
 
   build_agent_make:
     needs: [make_core]
@@ -200,14 +185,12 @@ jobs:
           ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
           ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
-          SUFFIX: ${{ (inputs.suffix_override != '' && inputs.suffix_override) || secrets.SUFFIX }}
-          LOCATION: ${{ secrets.LOCATION }}
-          ENVIRONMENT: ${{ inputs.environment }}
-          USE_RANDOM_ADDRESS_SPACE: ${{ (inputs.suffix_override != '' && '1') || '0' }}
-          DEVCONTAINER_ACR_NAME: ${{ secrets.DEVCONTAINER_ACR_NAME }}
-          DEVCONTAINER_IMAGE_IMAGE: flowehr/devcontainer
-          DEVCONTAINER_TAG: ${{ needs.make_core.outputs.dc_tag }}
-          ORG_GH_TOKEN: ${{ secrets.ORG_GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TF_VAR_SUFFIX: ${{ (inputs.suffix_override != '' && inputs.suffix_override) }}
+          TF_VAR_MGMT_ACR_NAME: ${{ secrets.DEVCONTAINER_ACR_NAME }}
+          TF_VAR_USE_RANDOM_ADDRESS_SPACE: ${{ (inputs.suffix_override != '' && '1') || '0' }}
+          TF_VAR_DEVCONTAINER_IMAGE_IMAGE: flowehr/devcontainer
+          TF_VAR_DEVCONTAINER_TAG: ${{ needs.make_core.outputs.dc_tag }}
         run: |
           make ${{ needs.make_core.outputs.build_agent_command }}
 
@@ -235,7 +218,7 @@ jobs:
       - name: Post build agent command
         uses: devcontainers/ci@v0.2
         env:
-          ORG_GH_TOKEN: "${{ secrets.ORG_GH_TOKEN }}"
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         with:
           # The image name cannot be set from the make_core output because it contains a secret
           imageName: ${{ secrets.DEVCONTAINER_ACR_NAME }}.azurecr.io/flowehr/devcontainer
@@ -250,9 +233,7 @@ jobs:
             ARM_CLIENT_SECRET=${{ secrets.ARM_CLIENT_SECRET }}
             ARM_TENANT_ID=${{ secrets.ARM_TENANT_ID }}
             ARM_SUBSCRIPTION_ID=${{ secrets.ARM_SUBSCRIPTION_ID }}
-            ORG_GH_TOKEN=${{ secrets.ORG_GH_TOKEN }}
-            SUFFIX=${{ (inputs.suffix_override != '' && inputs.suffix_override) || secrets.SUFFIX }}
-            LOCATION=${{ secrets.LOCATION }}
-            ENVIRONMENT=${{ inputs.environment }}
-            DEVCONTAINER_ACR_NAME=${{ secrets.DEVCONTAINER_ACR_NAME }}
-            USE_RANDOM_ADDRESS_SPACE=${{ (inputs.suffix_override != '' && '1') || '0' }}
+            GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+            TF_VAR_SUFFIX=${{ (inputs.suffix_override != '' && inputs.suffix_override) || secrets.SUFFIX }}
+            TF_VAR_MGMT_ACR_NAME=${{ secrets.DEVCONTAINER_ACR_NAME }}
+            TF_VAR_USE_RANDOM_ADDRESS_SPACE=${{ (inputs.suffix_override != '' && '1') || '0' }}
