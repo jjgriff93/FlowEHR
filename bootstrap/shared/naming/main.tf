@@ -42,29 +42,21 @@ variable "environment" {
   }
 }
 
-variable "location" {
-  description = "The Azure region you wish to deploy resources to"
-  type        = string
-
-  validation {
-    condition     = can(regex("[a-z]+", var.location))
-    error_message = "Only lowercase letters allowed"
-  }
-}
-
-variable "tf_in_automation" {
-  description = "Whether Terraform is being run in CI or locally. Local mode will whitelist deployer ip on certain resources to enable deployment outside of vnet."
-  type        = bool
-}
-
 variable "suffix" {
   description = "Override the suffix that would be generated from id + environment. Useful for transient PR environments"
   type        = string
   default     = ""
 }
 
-variable "mgmt_acr_name" {
-  description = "Override the ACR name (used from CI pipelines so it can be referenced before deployment to tag devcontainer image)"
-  type        = string
-  default     = ""
+locals {
+  naming_suffix           = var.suffix == "" ? "${var.id}-${var.environment}" : var.suffix
+  naming_suffix_truncated = substr(replace(replace(local.naming_suffix, "-", ""), "_", ""), 0, 12)
+}
+
+output "suffix" {
+  value = local.naming_suffix
+}
+
+output "suffix_truncated" {
+  value = local.naming_suffix_truncated
 }
