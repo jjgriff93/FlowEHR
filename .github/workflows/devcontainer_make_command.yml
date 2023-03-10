@@ -123,6 +123,7 @@ jobs:
             DOCKER_BUILDKIT=1
             TF_INPUT=0
             TF_IN_AUTOMATION=1
+            SUFFIX
             ARM_CLIENT_ID=${{ vars.ARM_CLIENT_ID }}
             ARM_CLIENT_SECRET=${{ secrets.ARM_CLIENT_SECRET }}
             ARM_TENANT_ID=${{ vars.ARM_TENANT_ID }}
@@ -209,6 +210,7 @@ jobs:
           env: |
             DOCKER_BUILDKIT=1
             TF_IN_AUTOMATION=1
+            SUFFIX
             ARM_CLIENT_ID=${{ vars.ARM_CLIENT_ID }}
             ARM_CLIENT_SECRET=${{ secrets.ARM_CLIENT_SECRET }}
             ARM_TENANT_ID=${{ vars.ARM_TENANT_ID }}
