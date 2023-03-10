@@ -114,7 +114,6 @@ jobs:
         uses: devcontainers/ci@v0.3
         with:
           imageName: ${{ steps.dc.outputs.image_path }}
-          cacheFrom: ${{ steps.dc.outputs.image_path }}
           imageTag: ${{ steps.dc.outputs.tag }}
           runCmd: make infrastructure-core
           push: never
