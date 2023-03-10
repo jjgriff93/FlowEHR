@@ -112,6 +112,8 @@ jobs:
 
       - name: Deploy core and build agent
         uses: devcontainers/ci@v0.3
+        env:
+          SUFFIX: ${{ inputs.suffix_override }}
         with:
           imageName: ${{ steps.dc.outputs.image_path }}
           imageTag: ${{ steps.dc.outputs.tag }}
@@ -130,7 +132,6 @@ jobs:
             CI_RESOURCE_GROUP=${{ vars.CI_RESOURCE_GROUP }}
             CI_STORAGE_ACCOUNT=${{ vars.CI_STORAGE_ACCOUNT }}
             ORG_GITHUB_TOKEN=${{ secrets.ORG_GITHUB_TOKEN }}
-            SUFFIX=${{ (inputs.suffix_override != '' && inputs.suffix_override) || '' }}
             TF_VAR_devcontainer_image=${{ env.DEVCONTAINER_NAME }}
             TF_VAR_devcontainer_tag=${{ steps.dc.outputs.tag }}
             TF_VAR_use_random_address_space=${{ (inputs.suffix_override != '' && '1') || '0' }}
@@ -166,7 +167,7 @@ jobs:
           CI_RESOURCE_GROUP: ${{ vars.CI_RESOURCE_GROUP }}
           CI_STORAGE_ACCOUNT: ${{ vars.CI_STORAGE_ACCOUNT }}
           ORG_GITHUB_TOKEN: ${{ secrets.ORG_GITHUB_TOKEN }}
-          SUFFIX: ${{ (inputs.suffix_override != '' && inputs.suffix_override) || '' }}
+          SUFFIX: ${{ inputs.suffix_override }}
           TF_VAR_use_random_address_space: ${{ (inputs.suffix_override != '' && '1') || '0' }}
           TF_VAR_devcontainer_image: ${{ env.DEVCONTAINER_NAME }}
           TF_VAR_devcontainer_tag: ${{ needs.make_core.outputs.dc_tag }}
@@ -196,6 +197,8 @@ jobs:
 
       - name: Post build agent command
         uses: devcontainers/ci@v0.3
+        env:
+          SUFFIX: ${{ inputs.suffix_override }}
         with:
           # The image name cannot be set from the make_core output because it contains a secret
           imageName: ${{ vars.CI_CONTAINER_REGISTRY }}.azurecr.io/${{ env.DEVCONTAINER_NAME }}
@@ -215,7 +218,6 @@ jobs:
             CI_RESOURCE_GROUP=${{ vars.CI_RESOURCE_GROUP }}
             CI_STORAGE_ACCOUNT=${{ vars.CI_STORAGE_ACCOUNT }}
             ORG_GITHUB_TOKEN=${{ secrets.ORG_GITHUB_TOKEN }}
-            SUFFIX=${{ (inputs.suffix_override != '' && inputs.suffix_override) || '' }}
             TF_VAR_use_random_address_space=${{ (inputs.suffix_override != '' && '1') || '0' }}
 
       - name: Clean up
