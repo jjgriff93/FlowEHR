@@ -81,7 +81,7 @@ Then edit `config.yaml` and specify the following values:
     > For more info on configuring and deploying apps, see the [README](./apps/README.md)
 
 
-### CI (GitHub Actions)
+### CI (GitHub Actions) CHANGE
 
 CI deployment workflows are run in [Github environments](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment). These should be created in a private repository created from this template repository.
 
